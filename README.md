@@ -1,5 +1,3 @@
-# game-quality-engineering-lab
-
 Unity Game ──────► Backend API ──────► AI NPC
     │                   │
 Unity Tests          Pytest
@@ -8,3 +6,5 @@ Unity Tests          Pytest
 
          └──── GitHub Actions ────┘
                   Quality Gate
+                  
+# game-quality-engineering-lab
