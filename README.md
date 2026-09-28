@@ -222,12 +222,12 @@ The telemetry API has its own automated regression suite using
 
 ### Planned API tests
 
--   [ ] `POST /events` accepts a valid `player_died` event
--   [ ] Event is persisted correctly
--   [ ] Invalid events are rejected
--   [ ] Death events can be retrieved
--   [ ] Deaths can be filtered by level
--   [ ] Death coordinates are preserved correctly
+-   [x] `POST /events` accepts a valid `player_died` event
+-   [x] Event is persisted correctly
+-   [x] Invalid events are rejected
+-   [x] Death events can be retrieved
+-   [x] Deaths can be filtered by level
+-   [x] Death coordinates are preserved correctly
 
 This layer demonstrates:
 
