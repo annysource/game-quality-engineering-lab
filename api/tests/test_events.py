@@ -1,16 +1,13 @@
-import pytest
+from unittest.mock import patch
 from fastapi.testclient import TestClient
-from app.main import app, events
+from app.main import app
 
 
 client = TestClient(app)
 
 
-@pytest.fixture(autouse=True)
-def clear_events():
-    events.clear()
-
-def test_create_player_died_event():
+@patch("app.main.db")
+def test_create_player_died_event(mock_db):
     event = {
         "event": "player_died",
         "level": "SampleScene",
@@ -21,10 +18,10 @@ def test_create_player_died_event():
     response = client.post("/events", json=event)
 
     assert response.status_code == 201
-    assert response.json()["event"] == "player_died"
-    assert response.json()["level"] == "SampleScene"
-    assert response.json()["x"] == 18.4
-    assert response.json()["y"] == 2.1
+    assert response.json() == event
+
+    mock_db.collection.assert_called_once_with("events")
+    mock_db.collection.return_value.add.assert_called_once_with(event)
 
 def test_reject_event_without_position():
     event = {

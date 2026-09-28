@@ -1,3 +1,4 @@
+from app.firebase import db
 from fastapi import FastAPI, status
 from pydantic import BaseModel
 
@@ -11,16 +12,23 @@ class GameplayEvent(BaseModel):
     y: float
 
 
-events: list[GameplayEvent] = []
 
 
 @app.post("/events", status_code=status.HTTP_201_CREATED)
 def create_event(event: GameplayEvent):
-    events.append(event)
+    db.collection("events").add(event.model_dump())
+
     return event
 
 @app.get("/events")
 def get_events():
+    docs = db.collection("events").stream()
+
+    events = []
+
+    for doc in docs:
+        events.append(doc.to_dict())
+
     return events
 
 @app.get("/deaths")
