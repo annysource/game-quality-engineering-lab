@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using Platformer.Core;
 using Platformer.Model;
 using UnityEngine;
+using Platformer.Services;
+using UnityEngine.SceneManagement;
 
 namespace Platformer.Gameplay
 {
@@ -19,6 +21,19 @@ namespace Platformer.Gameplay
             var player = model.player;
             if (player.health.IsAlive)
             {
+                var telemetryService = Object.FindFirstObjectByType<TelemetryService>();
+
+                if (telemetryService != null)
+                {
+                    telemetryService.SendPlayerDied(
+                        SceneManager.GetActiveScene().name,
+                        player.transform.position
+                    );
+                }
+                else
+                {
+                    Debug.LogWarning("TelemetryService not found in scene.");
+                }
                 player.health.Die();
                 model.virtualCamera.Follow = null;
                 model.virtualCamera.LookAt = null;

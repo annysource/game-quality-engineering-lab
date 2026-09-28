@@ -6,6 +6,14 @@ from app.main import app
 client = TestClient(app)
 
 
+class MockDocument:
+    def __init__(self, data):
+        self.data = data
+
+    def to_dict(self):
+        return self.data
+
+
 @patch("app.main.db")
 def test_create_player_died_event(mock_db):
     event = {
@@ -23,7 +31,9 @@ def test_create_player_died_event(mock_db):
     mock_db.collection.assert_called_once_with("events")
     mock_db.collection.return_value.add.assert_called_once_with(event)
 
-def test_reject_event_without_position():
+
+@patch("app.main.db")
+def test_reject_event_without_position(mock_db):
     event = {
         "event": "player_died",
         "level": "SampleScene"
@@ -33,40 +43,46 @@ def test_reject_event_without_position():
 
     assert response.status_code == 422
 
-def test_get_events_returns_recorded_death():
-    event = {
-        "event": "player_died",
-        "level": "SampleScene",
-        "x": 18.4,
-        "y": 2.1
-    }
+    mock_db.collection.assert_not_called()
 
-    client.post("/events", json=event)
+
+@patch("app.main.db")
+def test_get_events(mock_db):
+    mock_db.collection.return_value.stream.return_value = [
+        MockDocument({
+            "event": "player_died",
+            "level": "SampleScene",
+            "x": 18.4,
+            "y": 2.1
+        })
+    ]
 
     response = client.get("/events")
 
     assert response.status_code == 200
+    assert response.json() == [
+        {
+            "event": "player_died",
+            "level": "SampleScene",
+            "x": 18.4,
+            "y": 2.1
+        }
+    ]
 
-    events = response.json()
+    mock_db.collection.assert_called_once_with("events")
 
-    assert len(events) > 0
-    assert events[-1]["event"] == "player_died"
-    assert events[-1]["level"] == "SampleScene"
 
-def test_get_deaths_filters_by_level():
-    client.post("/events", json={
-        "event": "player_died",
-        "level": "SampleScene",
-        "x": 18.4,
-        "y": 2.1
-    })
-
-    client.post("/events", json={
-        "event": "player_died",
-        "level": "OtherLevel",
-        "x": 30.0,
-        "y": 4.0
-    })
+@patch("app.main.db")
+def test_get_deaths_filters_by_level(mock_db):
+    mock_query = mock_db.collection.return_value.where.return_value
+    mock_query.where.return_value.stream.return_value = [
+        MockDocument({
+            "event": "player_died",
+            "level": "SampleScene",
+            "x": 18.4,
+            "y": 2.1
+        })
+    ]
 
     response = client.get("/deaths?level=SampleScene")
 
@@ -74,6 +90,6 @@ def test_get_deaths_filters_by_level():
 
     deaths = response.json()
 
-    assert len(deaths) > 0
-    assert all(death["event"] == "player_died" for death in deaths)
-    assert all(death["level"] == "SampleScene" for death in deaths)
+    assert len(deaths) == 1
+    assert deaths[0]["event"] == "player_died"
+    assert deaths[0]["level"] == "SampleScene"

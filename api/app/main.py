@@ -33,8 +33,11 @@ def get_events():
 
 @app.get("/deaths")
 def get_deaths(level: str):
-    return [
-        event
-        for event in events
-        if event.event == "player_died" and event.level == level
-    ]
+    docs = (
+        db.collection("events")
+        .where("event", "==", "player_died")
+        .where("level", "==", level)
+        .stream()
+    )
+
+    return [doc.to_dict() for doc in docs]
